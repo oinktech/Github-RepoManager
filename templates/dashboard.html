@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub 倉庫管理</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>GitHub 倉庫管理</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>倉庫名稱</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for repo in repos %}
+                <tr>
+                    <td>{{ repo.name }}</td>
+                    <td>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#repoModal{{ repo.id }}">...</button>
+                    </td>
+                </tr>
+
+                <!-- Modal -->
+                <div class="modal fade" id="repoModal{{ repo.id }}" tabindex="-1" role="dialog" aria-labelledby="repoModalLabel{{ repo.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="repoModalLabel{{ repo.id }}">操作倉庫: {{ repo.name }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="{{ url_for('delete_repo', repo_id=repo.id) }}">
+                                    <button type="submit" class="btn btn-danger">刪除</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('rename_repo', repo_id=repo.id) }}">
+                                    <div class="form-group">
+                                        <label for="new_name">新名稱</label>
+                                        <input type="text" class="form-control" name="new_name" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">重命名</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-success">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>
