@@ -131,7 +131,7 @@ def check_repo_permission(repo_name):
 
     if response.status_code == 200:
         repo_data = response.json()
-        # 检查用户是否是仓库的拥有者或具有管理员权限
+        # 检查用户是否是仓库的拥有者
         if repo_data['owner']['login'] == session['github_username']:
             return True
         else:
