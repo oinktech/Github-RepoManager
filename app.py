@@ -97,6 +97,11 @@ def fetch_repositories():
 def delete_repo(repo_id):
     repo = Repository.query.get(repo_id)
     if repo:
+        # 检查用户对仓库的权限
+        if not check_repo_permission(repo.name):
+            flash('刪除失敗，無法訪問該倉庫。', 'danger')
+            return redirect(url_for('dashboard'))
+
         # 从 GitHub 删除仓库
         headers = {'Authorization': f'token {session["access_token"]}'}
         delete_url = f"https://api.github.com/repos/{session['github_username']}/{repo.name}"
@@ -117,6 +122,23 @@ def delete_repo(repo_id):
     else:
         flash('倉庫未找到。', 'danger')
     return redirect(url_for('dashboard'))
+
+def check_repo_permission(repo_name):
+    """检查用户对指定仓库的权限"""
+    headers = {'Authorization': f'token {session["access_token"]}'}
+    check_url = f"https://api.github.com/repos/{session['github_username']}/{repo_name}"
+    response = requests.get(check_url, headers=headers)
+
+    if response.status_code == 200:
+        repo_data = response.json()
+        # 检查用户是否是仓库的拥有者或具有管理员权限
+        if repo_data['owner']['login'] == session['github_username']:
+            return True
+        else:
+            flash('您無權刪除該倉庫。', 'danger')
+            return False
+    else:
+        return False  # 其他情况视为没有权限
 
 @app.route('/rename_repo/<int:repo_id>', methods=['POST'])
 def rename_repo(repo_id):
