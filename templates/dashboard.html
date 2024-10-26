@@ -27,7 +27,7 @@
                 {% for repo in repos %}
                 <tr>
                     <td>
-                        <a href="https://github.com/{{ repo.owner }}/{{ repo.name }}" target="_blank">{{ repo.name }}</a>
+                        <a href="https://github.com/{{ session['github_username'] }}/{{ repo.name }}" target="_blank">{{ repo.name }}</a>
                     </td>
                     <td>
                         <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#renameModal{{ repo.id }}">重新命名</button>
