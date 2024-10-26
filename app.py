@@ -60,11 +60,23 @@ def callback():
         flash('登入失敗，請重試。', 'danger')
     return redirect(url_for('dashboard'))
 
+
+@app.route('/proxy_repo')
+def proxy_repo():
+    repo_url = request.args.get('url')
+    if not repo_url:
+        return "缺少 URL", 400
+
+    # 发送请求以获取仓库的内容
+    response = requests.get(repo_url)
+    return (response.content, response.status_code, response.headers.items())
+
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     # 检查用户是否已登录
     if 'access_token' not in session:
-        return redirect(url_for('login'))  # 未登录时重定向到登录页面
+        return redirect(url_for('/'))  # 未登录时重定向到登录页面
 
     # 处理搜索
     search_query = request.args.get('search', '')
