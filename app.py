@@ -41,7 +41,7 @@ def dashboard():
 
 @app.route('/')
 def login():
-    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo,user,notifications,gist,read:org,admin:org,admin:repo_hook,read:repo_hook,write:repo_hook,workflow"
+    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo,user,notifications,gist,read:org,admin:org,admin:repo_hook,delete_repo,read:repo_hook,write:repo_hook,workflow"
     return redirect(github_auth_url)
 
 @app.route('/callback')
