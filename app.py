@@ -21,24 +21,6 @@ class Repository(db.Model):
 with app.app_context():
     db.create_all()
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard():
-    if 'access_token' not in session:
-        return redirect(url_for('login'))
-
-    # 处理搜索
-    search_query = request.args.get('search', '')
-    page = request.args.get('page', 1, type=int)
-    per_page = 5  # 每页显示的仓库数量
-    repos_query = Repository.query.filter(Repository.name.like(f'%{search_query}%'))
-
-    # 使用关键字参数调用 paginate()
-    repos = repos_query.paginate(page=page, per_page=per_page, error_out=False)
-
-    # 将 ceil 函数传递到模板上下文
-    return render_template('dashboard.html', repos=repos.items, search_query=search_query,
-                           total_repos=repos.total, per_page=per_page, ceil=ceil)
-
 @app.route('/')
 def login():
     github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo,user,notifications,gist,read:org,admin:org,admin:repo_hook,delete_repo,read:repo_hook,write:repo_hook,workflow"
@@ -77,6 +59,25 @@ def callback():
     else:
         flash('登入失敗，請重試。', 'danger')
     return redirect(url_for('dashboard'))
+
+@app.route('/dashboard', methods=['GET', 'POST'])
+def dashboard():
+    # 检查用户是否已登录
+    if 'access_token' not in session:
+        return redirect(url_for('login'))  # 未登录时重定向到登录页面
+
+    # 处理搜索
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 5  # 每页显示的仓库数量
+
+    # 查询仓库
+    repos_query = Repository.query.filter(Repository.name.like(f'%{search_query}%'))
+    repos = repos_query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # 将 ceil 函数传递到模板上下文
+    return render_template('dashboard.html', repos=repos.items, search_query=search_query,
+                           total_repos=repos.total, per_page=per_page, ceil=ceil)
 
 def fetch_repositories():
     headers = {'Authorization': f'token {session["access_token"]}'}
