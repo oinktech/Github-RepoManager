@@ -16,7 +16,9 @@ class Repository(db.Model):
     name = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(200), nullable=False)
 
-db.create_all()
+# 创建数据库表，使用应用上下文
+with app.app_context():
+    db.create_all()
 
 @app.route('/dashboard')
 def dashboard():
