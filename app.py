@@ -35,7 +35,8 @@ def dashboard():
     # 使用关键字参数调用 paginate()
     repos = repos_query.paginate(page=page, per_page=per_page, error_out=False)
 
-    return render_template('dashboard.html', repos=repos.items, search_query=search_query, total_repos=repos.total, per_page=per_page)
+    # 传递 ceil 函数到模板
+    return render_template('dashboard.html', repos=repos.items, search_query=search_query, total_repos=repos.total, per_page=per_page, ceil=ceil)
 
 @app.route('/')
 def login():
