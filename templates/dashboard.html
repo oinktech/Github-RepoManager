@@ -3,19 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub 倉庫管理</title>
+    <title>儲存庫儀表板</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1>GitHub 倉庫管理</h1>
-        <table class="table">
+    <div class="container">
+        <h1 class="mt-5">儲存庫儀表板</h1>
+        <form method="GET" class="mt-4">
+            <input type="text" name="search" class="form-control" placeholder="搜尋儲存庫" value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary mt-2">搜尋</button>
+        </form>
+        <table class="table mt-4">
             <thead>
                 <tr>
-                    <th>倉庫名稱</th>
+                    <th>儲存庫名稱</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -24,30 +28,51 @@
                 <tr>
                     <td>{{ repo.name }}</td>
                     <td>
-                        <button class="btn btn-info" data-toggle="modal" data-target="#repoModal{{ repo.id }}">...</button>
+                        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#renameModal{{ repo.id }}">重新命名</button>
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal{{ repo.id }}">刪除</button>
                     </td>
                 </tr>
 
-                <!-- Modal -->
-                <div class="modal fade" id="repoModal{{ repo.id }}" tabindex="-1" role="dialog" aria-labelledby="repoModalLabel{{ repo.id }}" aria-hidden="true">
+                <!-- 刪除確認模態 -->
+                <div class="modal fade" id="deleteModal{{ repo.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel{{ repo.id }}" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="repoModalLabel{{ repo.id }}">操作倉庫: {{ repo.name }}</h5>
+                                <h5 class="modal-title" id="deleteModalLabel{{ repo.id }}">確認刪除</h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <form method="POST" action="{{ url_for('delete_repo', repo_id=repo.id) }}">
+                                您確定要刪除儲存庫 "{{ repo.name }}" 嗎？
+                            </div>
+                            <div class="modal-footer">
+                                <form action="{{ url_for('delete_repo', repo_id=repo.id) }}" method="POST">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                                     <button type="submit" class="btn btn-danger">刪除</button>
                                 </form>
-                                <form method="POST" action="{{ url_for('rename_repo', repo_id=repo.id) }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 重新命名模態 -->
+                <div class="modal fade" id="renameModal{{ repo.id }}" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel{{ repo.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="renameModalLabel{{ repo.id }}">重新命名儲存庫</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="{{ url_for('rename_repo', repo_id=repo.id) }}" method="POST">
                                     <div class="form-group">
-                                        <label for="new_name">新名稱</label>
-                                        <input type="text" class="form-control" name="new_name" required>
+                                        <label for="new_name">新的儲存庫名稱</label>
+                                        <input type="text" name="new_name" class="form-control" required>
                                     </div>
-                                    <button type="submit" class="btn btn-warning">重命名</button>
+                                    <button type="submit" class="btn btn-primary">重新命名</button>
                                 </form>
                             </div>
                         </div>
@@ -56,14 +81,43 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-success">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
+
+        <!-- 分頁 -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if repos.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('dashboard', page=repos.prev_num, search=search_query) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% for page_num in range(1, ceil(total_repos / per_page) + 1) %}
+                <li class="page-item {% if page_num == repos.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('dashboard', page=page_num, search=search_query) }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+                {% if repos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('dashboard', page=repos.next_num, search=search_query) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        <div class="alert alert-dismissible fade show mt-4" role="alert">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endif %}
         {% endwith %}
     </div>
 </body>
