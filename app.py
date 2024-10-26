@@ -35,20 +35,12 @@ def dashboard():
     # 使用关键字参数调用 paginate()
     repos = repos_query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # 传递 ceil 函数到模板
-    return render_template('dashboard.html', repos=repos.items, search_query=search_query, total_repos=repos.total, per_page=per_page, ceil=ceil)
+    return render_template('dashboard.html', repos=repos.items, search_query=search_query, total_repos=repos.total, per_page=per_page)
 
 @app.route('/')
 def login():
-    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo"
+    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo,user,notifications,gist,read:org,admin:org,admin:repo_hook,read:repo_hook,write:repo_hook,workflow"
     return redirect(github_auth_url)
-
-@app.route('/logout')
-def logout():
-    session.pop('access_token', None)
-    session.pop('github_username', None)
-    return redirect(url_for('login'))
-
 
 @app.route('/callback')
 def callback():
@@ -106,15 +98,20 @@ def delete_repo(repo_id):
         # 从 GitHub 删除仓库
         headers = {'Authorization': f'token {session["access_token"]}'}
         delete_url = f"https://api.github.com/repos/{session['github_username']}/{repo.name}"
-        
+
+        print(f"Attempting to delete repository: {repo.name} by user: {session['github_username']}")  # Debugging info
         response = requests.delete(delete_url, headers=headers)
 
-        if response.status_code == 204:  # 204 No Content
+        print(f"Delete response: {response.status_code}, {response.text}")  # Debugging info
+
+        if response.status_code == 204:  # 204 No Content indicates success
             db.session.delete(repo)
             db.session.commit()
             flash('倉庫刪除成功。', 'success')
         else:
-            flash('刪除倉庫失敗，請檢查權限或倉庫名稱。', 'danger')
+            # 打印具体的错误消息以帮助调试
+            error_message = response.json().get('message', '未知錯誤')
+            flash(f'刪除倉庫失敗，請檢查權限或倉庫名稱：{error_message}', 'danger')
     else:
         flash('倉庫未找到。', 'danger')
     return redirect(url_for('dashboard'))
