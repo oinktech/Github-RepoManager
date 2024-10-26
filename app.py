@@ -18,15 +18,15 @@ class Repository(db.Model):
 
 db.create_all()
 
-@app.route('/')
-def index():
+@app.route('/dashboard')
+def dashboard():
     if 'access_token' not in session:
         return redirect(url_for('login'))
 
     repos = Repository.query.all()
-    return render_template('index.html', repos=repos)
+    return render_template('dashboard.html', repos=repos)
 
-@app.route('/login')
+@app.route('/')
 def login():
     github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo"
     return redirect(github_auth_url)
@@ -44,24 +44,24 @@ def callback():
     response = requests.post(token_url, json=payload, headers=headers)
     
     if response.status_code != 200:
-        flash('获取访问令牌失败，请重试。', 'danger')
+        flash('獲取訪問令牌失敗，請重試。', 'danger')
         return redirect(url_for('login'))
     
     data = response.json()
     session['access_token'] = data.get('access_token')
     if session['access_token']:
         fetch_repositories()
-        flash('登录成功！', 'success')
+        flash('登入成功！', 'success')
     else:
-        flash('登录失败，请重试。', 'danger')
-    return redirect(url_for('index'))
+        flash('登入失敗，請重試。', 'danger')
+    return redirect(url_for('dashboard'))
 
 def fetch_repositories():
     headers = {'Authorization': f'token {session["access_token"]}'}
     response = requests.get("https://api.github.com/user/repos", headers=headers)
     
     if response.status_code != 200:
-        flash('无法获取仓库，请检查访问令牌。', 'danger')
+        flash('無法獲取倉庫，請檢查訪問令牌。', 'danger')
         return
     
     repos = response.json()
@@ -77,10 +77,10 @@ def delete_repo(repo_id):
     if repo:
         db.session.delete(repo)
         db.session.commit()
-        flash('仓库删除成功。', 'success')
+        flash('倉庫刪除成功。', 'success')
     else:
-        flash('仓库未找到。', 'danger')
-    return redirect(url_for('index'))
+        flash('倉庫未找到。', 'danger')
+    return redirect(url_for('dashboard'))
 
 @app.route('/rename_repo/<int:repo_id>', methods=['POST'])
 def rename_repo(repo_id):
@@ -89,10 +89,10 @@ def rename_repo(repo_id):
     if repo and new_name:
         repo.name = new_name
         db.session.commit()
-        flash('仓库重命名成功。', 'success')
+        flash('倉庫重命名成功。', 'success')
     else:
-        flash('重命名失败，请确保输入有效的名称。', 'danger')
-    return redirect(url_for('index'))
+        flash('重命名失敗，請確保輸入有效的名稱。', 'danger')
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
-    app.run(debug=True,port=10000, host='0.0.0.0')
+    app.run(debug=True, port=10000, host='0.0.0.0')
