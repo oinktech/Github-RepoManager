@@ -31,10 +31,11 @@ def dashboard():
     page = request.args.get('page', 1, type=int)
     per_page = 5  # 每页显示的仓库数量
     repos_query = Repository.query.filter(Repository.name.like(f'%{search_query}%'))
-    total_repos = repos_query.count()
-    repos = repos_query.paginate(page, per_page, False)
 
-    return render_template('dashboard.html', repos=repos.items, search_query=search_query, total_repos=total_repos, per_page=per_page)
+    # 使用关键字参数调用 paginate()
+    repos = repos_query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template('dashboard.html', repos=repos.items, search_query=search_query, total_repos=repos.total, per_page=per_page)
 
 @app.route('/')
 def login():
