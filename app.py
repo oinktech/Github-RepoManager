@@ -43,6 +43,13 @@ def login():
     github_auth_url = f"https://github.com/login/oauth/authorize?client_id={os.getenv('GITHUB_CLIENT_ID')}&scope=repo"
     return redirect(github_auth_url)
 
+@app.route('/logout')
+def logout():
+    session.pop('access_token', None)
+    session.pop('github_username', None)
+    return redirect(url_for('login'))
+
+
 @app.route('/callback')
 def callback():
     code = request.args.get('code')
